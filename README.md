@@ -1,2 +1,2 @@
 # vtravel
-The future of the travel
+The future of travel
