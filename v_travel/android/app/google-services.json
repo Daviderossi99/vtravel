@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "623865819130",
+    "project_id": "vtravel-278bf",
+    "storage_bucket": "vtravel-278bf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:623865819130:android:2069a8f5615380a824be43",
+        "android_client_info": {
+          "package_name": "com.example.v_travel"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "623865819130-4hdp79vs28u8utbps40k6cogh4doj111.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaOrAr5Gf_BfAj5nZQJhJ6-A2Ckqwe8nI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "623865819130-4hdp79vs28u8utbps40k6cogh4doj111.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "623865819130-3vah7hpeq72asvrgbi91pljl8b2tc1ib.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vTravel"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
