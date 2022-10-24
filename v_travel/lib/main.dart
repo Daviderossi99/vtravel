@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:v_travel/providers/user_provider.dart';
@@ -14,7 +15,19 @@ import 'screens/signup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+          apiKey: "AIzaSyAaF0QKjTRiountdyA9SxMlbuNRzpbft-0",
+          authDomain: "vtravel-278bf.firebaseapp.com",
+          projectId: "vtravel-278bf",
+          storageBucket: "vtravel-278bf.appspot.com",
+          messagingSenderId: "623865819130",
+          appId: "1:623865819130:web:8fba9afd7494ed9124be43"),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(
       create: (_) => UserProvider(),
