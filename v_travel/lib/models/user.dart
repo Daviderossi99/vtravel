@@ -1,9 +1,9 @@
 class User {
   final String uid;
   final String username;
-  final String email;
+  final String? email;
 
-  User({required this.uid, required this.username, required this.email});
+  User({required this.uid, required this.username, this.email});
 
   Map<String, dynamic> toMap() {
     return {

@@ -66,7 +66,7 @@ class _ChatState extends State<Chat> {
           ),
           CustomTextField(
             controller: _chatController,
-            onTap: (val) {
+            onSubmitted: (val) {
               FirestoreMethods()
                   .chat(_chatController.text, widget.channelId, context);
               setState(() {

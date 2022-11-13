@@ -39,10 +39,14 @@ dependencies:
   firebase_storage: ^11.0.1
   flutter:
     sdk: flutter
+  flutter_facebook_auth: ^5.0.1
+  font_awesome_flutter: ^10.2.1
+  google_sign_in: ^5.4.2
   http: ^0.13.5
   permission_handler: ^10.2.0
   provider: ^6.0.4
   timeago: ^3.3.0
+  twitter_login: ^4.2.3
   uuid: ^3.0.6
 
 dev_dependencies:
