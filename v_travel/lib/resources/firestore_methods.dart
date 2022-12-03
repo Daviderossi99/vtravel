@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:v_travel/models/livestream.dart';
@@ -12,8 +13,8 @@ class FirestoreMethods {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final StorageMethods _storageMethods = StorageMethods();
 
-  Future<String> startLiveStream(
-      BuildContext context, String title, Uint8List? image) async {
+  Future<String> startLiveStream(BuildContext context, String title,
+      Uint8List? image, LatLng location) async {
     final user = Provider.of<UserProvider>(context, listen: false);
     String channelId = '';
     try {
@@ -30,14 +31,15 @@ class FirestoreMethods {
           );
           channelId = '${user.user.uid}${user.user.username}';
           LiveStream liveStream = LiveStream(
-            title: title,
-            image: thumbnailUrl,
-            uid: user.user.uid,
-            username: user.user.username,
-            startedAt: DateTime.now().toString(),
-            viewers: 0,
-            channelId: channelId,
-          );
+              title: title,
+              image: thumbnailUrl,
+              uid: user.user.uid,
+              username: user.user.username,
+              startedAt: DateTime.now().toString(),
+              viewers: 0,
+              channelId: channelId,
+              latitude: location.latitude,
+              longitude: location.longitude);
 
           _firestore
               .collection('livestream')

@@ -1,6 +1,8 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:v_travel/resources/firestore_methods.dart';
 import 'package:v_travel/responsive/responsive.dart';
 import 'package:v_travel/screens/broadcast_screen.dart';
@@ -19,6 +21,7 @@ class GoLiveScreen extends StatefulWidget {
 class _GoLiveScreenState extends State<GoLiveScreen> {
   final TextEditingController _titleController = TextEditingController();
   Uint8List? image;
+  LatLng? initialLocation;
 
   @override
   void dispose() {
@@ -26,21 +29,51 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
     super.dispose();
   }
 
+  Future<void> getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    Geolocator.getCurrentPosition().then((position) =>
+        (initialLocation = LatLng(position.latitude, position.longitude)));
+  }
+
   goLiveStream() async {
-    String channelId = await FirestoreMethods()
-        .startLiveStream(context, _titleController.text, image);
-    if (channelId.isNotEmpty) {
+    await getCurrentLocation();
+    if (initialLocation != null) {
       // ignore: use_build_context_synchronously
-      showSnackBar(context, 'Livestream has started successfully!');
-      // ignore: use_build_context_synchronously
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => BroadcastScreen(
-            isBroadcaster: true,
-            channelId: channelId,
+      String channelId = await FirestoreMethods().startLiveStream(
+          context, _titleController.text, image, initialLocation!);
+      if (channelId.isNotEmpty) {
+        // ignore: use_build_context_synchronously
+        showSnackBar(context, 'Livestream has started successfully!');
+        // ignore: use_build_context_synchronously
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => BroadcastScreen(
+              isBroadcaster: true,
+              channelId: channelId,
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
 
