@@ -4,6 +4,7 @@ import 'package:v_travel/models/livestream.dart';
 import 'package:v_travel/resources/firestore_methods.dart';
 import 'package:v_travel/responsive/responsive_layout.dart';
 import 'package:v_travel/screens/broadcast_screen.dart';
+import 'package:v_travel/widgets/mobile_live_card.dart';
 import 'package:v_travel/widgets/loading_indicator.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -66,7 +67,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             );
                           },
                           child: Container(
-                            height: size.height * 0.1,
+                            height: size.height * 0.5,
                             margin: const EdgeInsets.symmetric(vertical: 10),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,64 +110,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                     mobileBody: ListView.builder(
                         itemCount: snapshot.data.docs.length,
                         itemBuilder: ((context, index) {
-                          LiveStream post = LiveStream.fromMap(
+                          return MobileLiveCard(
                               snapshot.data.docs[index].data());
-                          return InkWell(
-                            onTap: () async {
-                              await FirestoreMethods()
-                                  .updateViewCount(post.channelId, true);
-                              // ignore: use_build_context_synchronously
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => BroadcastScreen(
-                                    isBroadcaster: false,
-                                    channelId: post.channelId,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              height: size.height * 0.1,
-                              margin: const EdgeInsets.symmetric(vertical: 10),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  AspectRatio(
-                                    aspectRatio: 16 / 9,
-                                    child: Image.network(post.image),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        post.username,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
-                                        ),
-                                      ),
-                                      Text(
-                                        post.title,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Text('${post.viewers} watching'),
-                                      Text(
-                                        'Started ${timeago.format(DateTime.parse(post.startedAt.toString()))}',
-                                      ),
-                                    ],
-                                  ),
-                                  IconButton(
-                                      onPressed: () {},
-                                      icon: const Icon(Icons.more_vert)),
-                                ],
-                              ),
-                            ),
-                          );
                         })),
                   ),
                 );

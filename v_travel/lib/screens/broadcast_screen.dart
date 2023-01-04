@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:agora_rtc_engine/rtc_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:v_travel/providers/user_provider.dart';
@@ -14,6 +16,7 @@ import 'package:v_travel/screens/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:v_travel/widgets/custom_button.dart';
 import '../config/appid.dart';
+import '../utils/colors.dart';
 import '../widgets/chat.dart';
 
 class BroadcastScreen extends StatefulWidget {
@@ -56,6 +59,8 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
   String baseUrl = "https://vtravel-server.herokuapp.com";
 
   String? token;
+
+  bool toggleChat = false;
 
   Future<void> getToken() async {
     final res = await http.get(
@@ -151,87 +156,8 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
     await _engine.muteLocalAudioStream(isMuted);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-    return WillPopScope(
-      onWillPop: () async {
-        await _leaveChannel();
-        return Future.value(true);
-      },
-      child: Scaffold(
-        bottomNavigationBar: widget.isBroadcaster
-            ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                child: CustomButton(
-                  text: 'End stream',
-                  onTap: _leaveChannel,
-                ),
-              )
-            : null,
-        body: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ResponsiveLayout(
-              desktopBody: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _renderVideo(user),
-                        if ("${user.uid}${user.username}" == widget.channelId)
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              InkWell(
-                                onTap: _switchCamera,
-                                child: const Text('Switch camera'),
-                              ),
-                              InkWell(
-                                onTap: onToggleMute,
-                                child: Text(isMuted ? 'Unmute' : 'Mute'),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-                  Chat(channelId: widget.channelId),
-                ],
-              ),
-              mobileBody: Column(
-                children: [
-                  _renderVideo(user),
-                  if ("${user.uid}${user.username}" == widget.channelId)
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        InkWell(
-                          onTap: _switchCamera,
-                          child: const Text('Switch camera'),
-                        ),
-                        InkWell(
-                          onTap: onToggleMute,
-                          child: Text(isMuted ? 'Unmute' : 'Mute'),
-                        ),
-                      ],
-                    ),
-                  Expanded(
-                    child: Chat(
-                      channelId: widget.channelId,
-                    ),
-                  )
-                ],
-              ),
-            )),
-      ),
-    );
-  }
-
   _renderVideo(user) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
+    return Center(
       child: "${user.uid}${user.username}" == widget.channelId
           ? const RtcLocalView.SurfaceView(
               zOrderMediaOverlay: true,
@@ -248,6 +174,124 @@ class _BroadcastScreenState extends State<BroadcastScreen> {
                       channelId: widget.channelId,
                     )
               : Container(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
+    return WillPopScope(
+      onWillPop: () async {
+        await _leaveChannel();
+        return Future.value(true);
+      },
+      child: Scaffold(
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(left: 32.0, bottom: 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 60.0),
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: FloatingActionButton(
+                    onPressed: _leaveChannel,
+                    focusColor: primaryColor,
+                    backgroundColor: Colors.red,
+                    child: const Icon(
+                      Icons.exit_to_app,
+                      size: 30,
+                    ),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //will break to another line on overflow
+                children: [
+                  !toggleChat
+                      ? FloatingActionButton(
+                          onPressed: _switchCamera,
+                          focusColor: primaryColor,
+                          backgroundColor: buttonColor,
+                          child: const Icon(FontAwesomeIcons.cameraRotate),
+                        )
+                      : Container(),
+                  !toggleChat
+                      ? SizedBox(
+                          height: 68.0,
+                          width: 68.0,
+                          child: FittedBox(
+                            child: FloatingActionButton(
+                              onPressed: (() {}),
+                              focusColor: primaryColor,
+                              backgroundColor: buttonColor,
+                              child: const Icon(
+                                Icons.photo_camera,
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(),
+                  !toggleChat
+                      ? FloatingActionButton(
+                          onPressed: () => setState(() {
+                            toggleChat = true;
+                          }),
+                          focusColor: primaryColor,
+                          backgroundColor: buttonColor,
+                          child: const Icon(Icons.chat),
+                        )
+                      : Container(),
+                ],
+              ),
+            ],
+          ),
+        ),
+        body: ResponsiveLayout(
+          desktopBody: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    _renderVideo(user),
+                    if ("${user.uid}${user.username}" == widget.channelId)
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          InkWell(
+                            onTap: _switchCamera,
+                            child: const Text('Switch camera'),
+                          ),
+                          InkWell(
+                            onTap: onToggleMute,
+                            child: Text(isMuted ? 'Unmute' : 'Mute'),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              Chat(channelId: widget.channelId),
+            ],
+          ),
+          mobileBody: Stack(
+            children: [
+              _renderVideo(user),
+              ("${user.uid}${user.username}" == widget.channelId && toggleChat)
+                  ? Expanded(
+                      child: Chat(
+                        channelId: widget.channelId,
+                      ),
+                    )
+                  : Container(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

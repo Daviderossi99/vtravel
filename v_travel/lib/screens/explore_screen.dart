@@ -9,11 +9,15 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:v_travel/utils/utils.dart';
+import 'package:v_travel/widgets/mobile_live_card.dart';
 import 'dart:convert' as convert;
 import '../models/livestream.dart';
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key});
+  final void Function(bool markerClicked, Map<String, dynamic>? liveStream)
+      callBack;
+
+  const ExploreScreen(this.callBack, {super.key});
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
@@ -90,8 +94,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   String? input;
   List<dynamic> placesList = [];
-
+  late AsyncSnapshot snapshot;
+  dynamic currentMarker;
   bool foundLocation = false;
+  bool search = false;
+  bool markerClicked = false;
+  String searchBarText = 'Search...';
 
   void getSuggestion(String input) async {
     final String url =
@@ -144,14 +152,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> goToPlace(Map<String, dynamic> place) async {
+    currentMarker = null;
+    markerClicked = false;
+    widget.callBack(false, currentMarker?.data());
+    WidgetsBinding.instance.handlePointerEvent(const PointerDownEvent(
+      pointer: 0,
+      position: Offset(100, 100),
+    ));
+    WidgetsBinding.instance.handlePointerEvent(const PointerUpEvent(
+      pointer: 0,
+      position: Offset(100, 100),
+    ));
     final double lat = place['geometry']['location']['lat'];
     final double lng = place['geometry']['location']['lng'];
-    final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(
-        CameraPosition(target: LatLng(lat, lng), zoom: 10)));
+    await moveCamera(lat, lng, zoom);
     setState(() {
       foundLocation = true;
     });
+  }
+
+  moveCamera(double lat, double lng, double zoom) async {
+    final GoogleMapController controller = await _controller.future;
+    controller.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: LatLng(lat, lng), zoom: zoom)));
   }
 
   @override
@@ -164,11 +187,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Set<Marker> updateMarkers(AsyncSnapshot<dynamic> snapshot) {
     snapshot.data.docs.forEach((doc) => {
           markers.add(Marker(
-            icon: BitmapDescriptor.fromBytes(myIcon),
-            markerId: const MarkerId("currentLocation"),
-            position: LatLng(LiveStream.fromMap(doc.data()).latitude,
-                LiveStream.fromMap(doc.data()).longitude),
-          ))
+              icon: BitmapDescriptor.fromBytes(myIcon),
+              markerId: const MarkerId("currentLocation"),
+              position: LatLng(LiveStream.fromMap(doc.data()).latitude,
+                  LiveStream.fromMap(doc.data()).longitude),
+              onTap: () => {
+                    setState(() {
+                      markerClicked = true;
+                    }),
+                    currentMarker = doc,
+                    widget.callBack(true, currentMarker?.data()),
+                    moveCamera(LiveStream.fromMap(doc.data()).latitude,
+                        LiveStream.fromMap(doc.data()).longitude, 15)
+                  }))
         });
     return markers;
   }
@@ -190,7 +221,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         .collection('livestream')
                         .snapshots(),
                     builder: (context, snapshot) {
+                      this.snapshot = snapshot;
                       return GoogleMap(
+                        mapToolbarEnabled: false,
                         onMapCreated: ((controller) =>
                             _controller.complete(controller)),
                         compassEnabled: false,
@@ -206,6 +239,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             setIcon();
                           });
                         },
+                        onTap: ((argument) {
+                          setState(() {
+                            widget.callBack(false, currentMarker.data());
+                            currentMarker = null;
+                            markerClicked = false;
+                          });
+                        }),
                         markers: snapshot.data != null &&
                                 snapshot.data.docs.length > 0 &&
                                 zoom > 10
@@ -213,12 +253,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             : {},
                       );
                     }),
+                markerClicked && !search
+                    ? Align(
+                        alignment: Alignment.bottomCenter,
+                        child: MobileLiveCard(currentMarker.data()))
+                    : Container(),
                 FloatingSearchBar(
                   onFocusChanged: (isFocused) => setState(() {
+                    search = isFocused;
                     foundLocation = !isFocused;
                   }),
                   onSubmitted: (query) => foundLocation = true,
-                  hint: 'Search...',
+                  hint: searchBarText,
                   borderRadius: BorderRadius.circular(20),
                   scrollPadding: const EdgeInsets.only(top: 16, bottom: 56),
                   transitionDuration: const Duration(milliseconds: 300),
@@ -272,6 +318,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   .map((suggestion) => ListTile(
                                         title: Text(suggestion['description']),
                                         onTap: () async {
+                                          searchBarText =
+                                              suggestion['description']
+                                                  .toString();
+
                                           var place = await getPlaceWithId(
                                               suggestion['place_id']);
                                           goToPlace(place);

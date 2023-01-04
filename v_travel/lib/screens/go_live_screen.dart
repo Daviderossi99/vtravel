@@ -63,7 +63,6 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
           context, _titleController.text, image, initialLocation!);
       if (channelId.isNotEmpty) {
         // ignore: use_build_context_synchronously
-        showSnackBar(context, 'Livestream has started successfully!');
         // ignore: use_build_context_synchronously
         Navigator.of(context).push(
           MaterialPageRoute(
